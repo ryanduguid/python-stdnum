@@ -86,6 +86,18 @@ Tests can be run with `tox`. Some basic code style tests can be run with `tox
 -e flake8` and most other targets run the test suite with various supported
 Python interpreters.
 
+Tests use the real date by default. For reproducible builds, set
+`STDNUM_TEST_DATE` to an explicit date in `YYYY-MM-DD` format, for example
+`STDNUM_TEST_DATE=2026-09-21 tox -e py312`. The same variable works with a
+direct `pytest` invocation. Invalid or empty values fail with a configuration
+error.
+
+This test-only option replaces `datetime.date.today()` during the test session;
+it does not change the host clock or the installed library. Date construction
+still returns ordinary date objects. Choose a reference date appropriate for
+the release being tested. Leave the variable unset for development and
+scheduled tests so that changes caused by the passage of time remain visible.
+
 Module implementations have a couple of smaller test cases that also serve as
 basic documentation of the happy flow.
 
