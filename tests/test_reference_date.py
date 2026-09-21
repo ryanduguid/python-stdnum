@@ -23,8 +23,10 @@ import pytest
 
 
 @pytest.fixture
-def clock_suite(pytester: pytest.Pytester) -> pytest.Pytester:
+def clock_suite(pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch) -> pytest.Pytester:
     """Install the real configuration in an isolated test directory."""
+    # These child suites test pytest configuration, not library coverage.
+    monkeypatch.delenv('COV_CORE_DATAFILE', raising=False)
     source = Path(__file__).resolve().parent.parent / 'conftest.py'
     pytester.makeconftest(source.read_text() + """
 import datetime
