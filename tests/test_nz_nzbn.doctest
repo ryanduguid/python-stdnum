@@ -1,0 +1,158 @@
+test_nz_nzbn.doctest - more detailed doctests for the stdnum.nz.nzbn module
+
+Copyright (C) 2026 Ryan Duguid
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see <https://www.gnu.org/licenses/>.
+
+
+>>> from stdnum import ean
+>>> from stdnum.nz import nzbn
+>>> from stdnum.util import get_cc_module
+
+
+The official API documentation uses this NZBN as an example:
+https://portal.api.business.govt.nz/api/nzbn
+
+>>> nzbn.validate(' 9429 0001-06078 ')
+'9429000106078'
+>>> nzbn.is_valid('9429000106078')
+True
+
+
+These public corporate NZBNs were retrieved from the Peppol Directory on
+30 September 2026, selecting NZ businesses with Limited or Ltd names:
+https://directory.peppol.eu/search/1.0/json?country=NZ&name=Limited&rpc=20&rpi=0
+The NZ Peppol Authority describes 0088 participant identifiers as NZBNs:
+https://www.einvoicing.govt.nz/peppol
+Only the numbers are retained. These samples demonstrate public use, not
+current registration status. The tests do not require online lookups.
+
+>>> numbers = '''
+... 9429033583235 9429036313396 9429036508273 9429038040771
+... 9429042199526 9429046598677 9429047226265 9429047352476
+... 9429047631373 9429047646063 9429050822034 9429051109004
+... 9429051279066 9429051383916 9429051806613 9429051826130
+... 9429051919207 9429052018237 9429052239762 9429052925023
+... '''.split()
+>>> all(nzbn.validate(number) == number for number in numbers)
+True
+>>> all(nzbn.is_valid(number) for number in numbers)
+True
+
+
+Compaction uses the shared cleaner, including recognised Unicode digits,
+spaces and dashes. It does not validate the number.
+
+>>> nzbn.compact(' ABC-12 ')
+'ABC12'
+>>> nzbn.validate('９４２９０００１０６０７８')
+'9429000106078'
+>>> nzbn.validate(' 9429\u00a00001\u221206078 ')
+'9429000106078'
+
+
+Malformed inputs raise InvalidFormat before checking length or checksum.
+Unsupported Unicode digits and internal tabs are not stripped or coerced.
+
+>>> nzbn.validate('X')
+Traceback (most recent call last):
+    ...
+InvalidFormat: ...
+>>> nzbn.validate(' - ')
+Traceback (most recent call last):
+    ...
+InvalidFormat: ...
+>>> nzbn.validate('942900010607A')
+Traceback (most recent call last):
+    ...
+InvalidFormat: ...
+>>> nzbn.validate('9429.000106078')
+Traceback (most recent call last):
+    ...
+InvalidFormat: ...
+>>> nzbn.validate('9429\t000106078')
+Traceback (most recent call last):
+    ...
+InvalidFormat: ...
+>>> nzbn.validate('942900010607\u1b53')
+Traceback (most recent call last):
+    ...
+InvalidFormat: ...
+
+
+The length gate rejects EAN-valid 8-, 12- and 14-digit numbers, and checks
+length before the checksum even when a 12-digit checksum is wrong.
+
+>>> all(ean.is_valid(number) for number in (
+...     '73513537', '036000291452', '98412345678908'))
+True
+>>> nzbn.validate('73513537')
+Traceback (most recent call last):
+    ...
+InvalidLength: ...
+>>> nzbn.validate('036000291452')
+Traceback (most recent call last):
+    ...
+InvalidLength: ...
+>>> nzbn.validate('98412345678908')
+Traceback (most recent call last):
+    ...
+InvalidLength: ...
+>>> nzbn.validate('036000291453')
+Traceback (most recent call last):
+    ...
+InvalidLength: ...
+
+
+The following numbers are constructed test cases, with no NZBN assignment
+asserted. The documented prefix is 942, rather than a narrower 9429 rule.
+A different prefix raises InvalidComponent before checking its checksum.
+
+>>> nzbn.validate('9420000000007')
+'9420000000007'
+>>> ean.validate('1234567890128')
+'1234567890128'
+>>> nzbn.validate('1234567890128')
+Traceback (most recent call last):
+    ...
+InvalidComponent: ...
+>>> nzbn.validate('1234567890129')
+Traceback (most recent call last):
+    ...
+InvalidComponent: ...
+>>> nzbn.validate('0000000000000')
+Traceback (most recent call last):
+    ...
+InvalidComponent: ...
+
+
+A changed check digit fails once format, length and prefix are valid.
+The boolean API catches every validation failure, including cleaner errors.
+
+>>> nzbn.validate('9429000106079')
+Traceback (most recent call last):
+    ...
+InvalidChecksum: ...
+>>> invalid_numbers = (
+...     '', 'X', '73513537', '1234567890128', '9429000106079', None, 9429000106078)
+>>> any(nzbn.is_valid(number) for number in invalid_numbers)
+False
+
+
+Country-module discovery includes NZBN without changing the NZ VAT alias.
+
+>>> get_cc_module('NZ', 'nzbn') is nzbn
+True
+>>> get_cc_module('nz', 'vat').__name__
+'stdnum.nz.ird'
