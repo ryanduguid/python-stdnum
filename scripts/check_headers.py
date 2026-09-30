@@ -52,8 +52,8 @@ license_re = re.compile(textwrap.dedent(r'''
 
 def get_file_header(filename):
     """Read the file header from the file."""
-    with open(filename, 'rt') as f:
-        # Only read the first 2048 bytes to avoid loading too much and the
+    with open(filename, 'rt', encoding='utf-8') as f:
+        # Only read the first 2048 characters to avoid loading too much and the
         # license information should be in the first part anyway.
         return f.read(2048)
 
@@ -74,7 +74,8 @@ if __name__ == '__main__':
     for filename in sorted(files_to_check):
         contents = get_file_header(filename)
         m = identification_re.match(contents)
-        if not bool(m) or m.group('filename') not in (filename, os.path.basename(filename)):
+        if not bool(m) or m.group('filename') not in (
+                filename, filename.replace(os.sep, '/'), os.path.basename(filename)):
             print('%s: Incorrect file identification' % filename)
             fail = True
         if not bool(license_re.search(contents)):
