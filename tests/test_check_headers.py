@@ -38,7 +38,8 @@ class TestHeaders(unittest.TestCase):
 
     def _check(self, filename: str, contents: str) -> subprocess.CompletedProcess[str]:
         """Run the checker against one fixture in an isolated directory."""
-        command = [sys.executable]
+        # The checker uses only the standard library, so skip site startup hooks.
+        command = [sys.executable, '-S']
         if os.name == 'nt':
             # Disable UTF-8 mode so it cannot hide the locale-decoding failure.
             command.extend(['-X', 'utf8=0'])
