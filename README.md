@@ -1,6 +1,11 @@
 python-stdnum
 =============
 
+**Fork status**
+
+[![Fork code quality](https://app.codacy.com/project/badge/Grade/7896e71e51614e72a71ac432525765fd?branch=master)](https://app.codacy.com/gh/ryanduguid/python-stdnum/dashboard)
+[![Fork Test](https://github.com/ryanduguid/python-stdnum/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/ryanduguid/python-stdnum/actions/workflows/test.yml)
+
 A Python module to parse, validate and reformat standard numbers and codes
 in different formats. It contains a large collection of number formats.
 
