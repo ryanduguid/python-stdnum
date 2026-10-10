@@ -25,6 +25,7 @@ stdnum.
 
 from __future__ import annotations
 
+import os.path
 import pkgutil
 import pydoc
 import re
@@ -259,6 +260,40 @@ def get_cc_module(cc: str, name: str) -> NumberValidationModule | None:
 _soap_clients: dict[tuple[str, float, bool | str], Any] = {}
 
 
+def _get_ssl_context(verify: bool | str) -> ssl.SSLContext:
+    """Return the SSL context to use for a SOAP connection.
+
+    The verify parameter follows the same semantics as the requests
+    library: True (the default) verifies against the default CA bundle
+    and checks the server hostname, a string points to a CA certificate
+    file or a hashed certificate directory, and False disables
+    certificate validation as an explicit caller choice.
+
+    >>> context = _get_ssl_context(True)
+    >>> context.check_hostname, context.verify_mode == ssl.CERT_REQUIRED
+    (True, True)
+    >>> context = _get_ssl_context(False)
+    >>> context.check_hostname, context.verify_mode == ssl.CERT_NONE
+    (False, True)
+    >>> from unittest import mock
+    >>> with mock.patch.object(ssl, 'create_default_context') as create:
+    ...     _ = _get_ssl_context('some-ca-file.pem')
+    ...     create.call_args.kwargs
+    ...     _ = _get_ssl_context('.')
+    ...     create.call_args.kwargs
+    {'cafile': 'some-ca-file.pem'}
+    {'capath': '.'}
+    """
+    if isinstance(verify, str):
+        locations = {'capath': verify} if os.path.isdir(verify) else {'cafile': verify}
+        return ssl.create_default_context(ssl.Purpose.SERVER_AUTH, **locations)
+    ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+    if verify is False:
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+    return ssl_context
+
+
 def _get_zeep_soap_client(
     wsdlurl: str,
     timeout: float,
@@ -278,7 +313,6 @@ def _get_suds_soap_client(
     timeout: float,
     verify: bool | str,
 ) -> Any:  # pragma: no cover (not part of normal test suite)
-    import os.path
     from urllib.request import HTTPSHandler, getproxies
 
     from suds.client import Client  # type: ignore
@@ -288,17 +322,7 @@ def _get_suds_soap_client(
 
         def u2handlers(self):  # type: ignore[no-untyped-def]
             handlers = super(CustomSudsTransport, self).u2handlers()
-            if isinstance(verify, str):
-                if not os.path.isdir(verify):
-                    ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, capath=verify)
-                else:
-                    ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile=verify)
-            else:
-                ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
-                if verify is False:
-                    ssl_context.check_hostname = False
-                    ssl_context.verify_mode = ssl.CERT_NONE
-            handlers.append(HTTPSHandler(context=ssl_context))
+            handlers.append(HTTPSHandler(context=_get_ssl_context(verify)))
             return handlers
     warnings.warn(
         'Use of Suds for SOAP requests is deprecated, please use Zeep instead',
