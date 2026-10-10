@@ -15,6 +15,13 @@ or some common formatting is eligible for inclusion in this library.
 https://arthurdejong.org/python-stdnum/
 
 
+On this page:
+
+- [Interface](#interface)
+- [Requirements](#requirements)
+- [Available formats](#available-formats)
+- [Feedback and bug reports](#feedback-and-bug-reports)
+
 Available formats
 -----------------
 
