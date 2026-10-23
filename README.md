@@ -1,10 +1,13 @@
 python-stdnum
 =============
 
+<div align="center">
+
 **Fork status**
 
-[![Fork code quality](https://img.shields.io/codacy/grade/7896e71e51614e72a71ac432525765fd/master?style=flat&labelColor=000000)](https://app.codacy.com/gh/ryanduguid/python-stdnum/dashboard)
-[![Fork Test](https://img.shields.io/github/actions/workflow/status/ryanduguid/python-stdnum/test.yml?branch=master&label=Test&style=flat&labelColor=000000)](https://github.com/ryanduguid/python-stdnum/actions/workflows/test.yml)
+[![Fork code quality](https://img.shields.io/codacy/grade/7896e71e51614e72a71ac432525765fd/master?style=flat&labelColor=000000)](https://app.codacy.com/gh/ryanduguid/python-stdnum/dashboard) [![Fork Test](https://img.shields.io/github/actions/workflow/status/ryanduguid/python-stdnum/test.yml?branch=master&label=Test&style=flat&labelColor=000000)](https://github.com/ryanduguid/python-stdnum/actions/workflows/test.yml)
+
+</div>
 
 A Python module to parse, validate and reformat standard numbers and codes
 in different formats. It contains a large collection of number formats.
